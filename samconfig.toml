@@ -1,0 +1,9 @@
+version = 0.1
+[dev.deploy.parameters]
+stack_name = "sqs-lambda-sns-stack-sandesh"
+resolve_s3 = true
+s3_prefix = "sqs-lambda-sns-stack-sandesh"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+image_repositories = []

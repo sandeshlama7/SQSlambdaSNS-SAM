@@ -85,7 +85,7 @@ Resources:
   TriggeringBucketSandesh:
     Type: AWS::S3::Bucket
     Properties:
-        BucketName: "TriggeringBucketSandesh"
+        BucketName: "triggeringbucketsandesh"
         NotificationConfiguration:
           QueueConfigurations:
             - Event: s3:ObjectCreated:*
