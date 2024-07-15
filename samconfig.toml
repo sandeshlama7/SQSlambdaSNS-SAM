@@ -1,8 +1,8 @@
 version = 0.1
 [dev.deploy.parameters]
-stack_name = "sqs-lambda-sns-stack-sandesh"
+stack_name = "sam-configuration-sandesh-stacl"
 resolve_s3 = true
-s3_prefix = "sqs-lambda-sns-stack-sandesh"
+s3_prefix = "sam-configuration-sandesh-stacl"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
