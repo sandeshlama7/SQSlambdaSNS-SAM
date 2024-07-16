@@ -1,9 +1,11 @@
 version = 0.1
 [dev.deploy.parameters]
-stack_name = "sam-configuration-sandesh-stacl"
-resolve_s3 = true
-s3_prefix = "sam-configuration-sandesh-stacl"
+stack_name = "test-sandesh-sam"
+s3_bucket = "8586-terraform-state"
+s3_prefix = "test-sandesh-sam"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 image_repositories = []
+resolve_s3 = true
+disable_rollback = true

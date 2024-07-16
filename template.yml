@@ -15,51 +15,55 @@ Resources:
         Version: 2012-10-17
         Id: SQSPolicy
         Statement:
-        - Sid: "AllowS3Message"
-          Effect: Allow
-          Principal:
-            Service: "s3.amazonaws.com"
-          Action: "sqs:*"
-          Resource: !GetAtt TriggeringSQSSandesh.Arn
-          Condition:
-            ArnLike:
-              aws:SourceArn: !GetAtt TriggeringBucketSandesh.Arn
-        - Sid: "AllowtoLambda"
-          Effect: "Allow"
-          Principal:
-            Service: "lambda.amazonaws.com"
-          Action: "sqs:*"
-          Resource: !GetAtt TriggeringSQSSandesh.Arn
-          Condition:
-            ArnEquals:
-              aws:PrincipalArn: !GetAtt SamLambdaSandesh.ARN
+          - Sid: "AllowS3Message"
+            Effect: Allow
+            Principal:
+              Service: "s3.amazonaws.com"
+            Action: "sqs:*"
+            Resource: !GetAtt TriggeringSQSSandesh.Arn
+            Condition:
+              ArnLike:
+                aws:SourceArn: !GetAtt TriggeringBucketSandesh.Arn
+          - Sid: "AllowtoLambda"
+            Effect: "Allow"
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action: "sqs:*"
+            Resource: !GetAtt TriggeringSQSSandesh.Arn
+            Condition:
+              ArnEquals:
+                aws:PrincipalArn: !GetAtt SamLambdaSandesh.Arn
+      Queues:
+        - !Ref TriggeringSQSSandesh
+    DependsOn:
+      - TriggeringBucketSandesh
 
-      Queues: !GetAtt TriggeringSQSSandesh.Arn
+  # LambdaSNSPolicy:
+  #   Type: AWS::SNS::TopicPolicy
+  #   Properties:
+  #     PolicyDocument:
+  #       Version: 2012-10-17
+  #       Id: SNSPolicy
+  #       Statement:
+  #       - Sid: "AllowLambda"
+  #         Effect: Allow
+  #         Principal:
+  #           Service: "lambda.amazonaws.com"
+  #         Action: "sns:Publish"
+  #         Resource: !Ref SNSEmail
+  #         Condition:
+  #           ArnEquals:
+  #             aws:PrincipalArn: !GetAtt SamLambdaSandesh.Arn
 
-  LambdaSNSPolicy:
-    Type: AWS::SNS::TopicPolicy
-    Properties:
-      PolicyDocument:
-        Version: 2012-10-17
-        Id: SNSPolicy
-        Statement:
-        - Sid: "AllowLambda"
-          Effect: Allow
-          Principal:
-            Service: "lambda.amazonaws.com"
-          Action: "sns:Publish"
-          Resource: !Ref SNSEmail
-          Condition:
-            ArnEquals:
-              aws:PrincipalArn: !GetAtt SamLambdaSandesh.ARN
+  #     Topics:
+  #       - !Ref SNSEmail
 
-      Topics: !Ref SNSEmail
 
   SamLambdaSandesh:
     Type: AWS::Serverless::Function
     Properties:
       Handler: lambda_function.lambda_handler
-      Runtime: python3.9
+      Runtime: python3.10
       CodeUri: lambda/
       Description: Lambda function to publish to SNS Topic
       MemorySize: 128
@@ -70,8 +74,11 @@ Resources:
             Queue: !GetAtt TriggeringSQSSandesh.Arn
             BatchSize: 10
       Environment:
-        SNS_ARN: !GetAtt SNSEmail.Arn
+        Variables:
+          SNS_ARN: !Ref SNSEmail
       Policies:
+      - SNSPublishMessagePolicy:
+            TopicName: !GetAtt SNSEmail.TopicName
       - CloudWatchPutMetricPolicy: {}
       - SQSPollerPolicy:
             QueueName: !GetAtt TriggeringSQSSandesh.QueueName
@@ -85,12 +92,11 @@ Resources:
   TriggeringBucketSandesh:
     Type: AWS::S3::Bucket
     Properties:
-        BucketName: "triggeringbucketsandesh"
-        NotificationConfiguration:
-          QueueConfigurations:
-            - Event: s3:ObjectCreated:*
-              Queue: !GetAtt TriggeringSQSSandesh.Arn
+      BucketName: "triggeringbucketsandesh"
+      # NotificationConfiguration:
+      #   QueueConfigurations:
+      #     - Event: s3:ObjectCreated:*
+      #       Queue: !GetAtt TriggeringSQSSandesh.Arn
 
     DependsOn:
       - SNSEmail
-      - TriggeringSQSSandesh
