@@ -2,6 +2,12 @@
 AWSTemplateFormatVersion : '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: A SQS, Lambda and SNS Configuration
+
+Parameters:
+  BucketName:
+    Type: String
+    Default: "triggeringbucketsandesh"
+
 Resources:
   TriggeringSQSSandesh:
     Type: AWS::SQS::Queue
@@ -23,7 +29,8 @@ Resources:
             Resource: !GetAtt TriggeringSQSSandesh.Arn
             Condition:
               ArnLike:
-                aws:SourceArn: !GetAtt TriggeringBucketSandesh.Arn
+                # aws:SourceArn: !GetAtt TriggeringBucketSandesh.Arn
+                aws:SourceArn: !Sub arn:aws:s3:::${BucketName}
           - Sid: "AllowtoLambda"
             Effect: "Allow"
             Principal:
@@ -35,8 +42,6 @@ Resources:
                 aws:PrincipalArn: !GetAtt SamLambdaSandesh.Arn
       Queues:
         - !Ref TriggeringSQSSandesh
-    DependsOn:
-      - TriggeringBucketSandesh
 
   SamLambdaSandesh:
     Type: AWS::Serverless::Function
@@ -79,7 +84,7 @@ Resources:
   TriggeringBucketSandesh:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: "triggeringbucketsandesh"
+      BucketName: !Ref BucketName
       NotificationConfiguration:
         QueueConfigurations:
           - Event: s3:ObjectCreated:*
@@ -92,3 +97,4 @@ Resources:
 
     DependsOn:
       - SNSEmail
+      - SQSQueuePolicy

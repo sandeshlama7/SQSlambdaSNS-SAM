@@ -1,6 +1,6 @@
 version = 0.1
 [dev.deploy.parameters]
-stack_name = "test-sandesh-sam"
+stack_name = "sam-sandesh-1"
 s3_bucket = "8586-terraform-state"
 s3_prefix = "test-sandesh-sam"
 region = "us-east-1"
