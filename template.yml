@@ -38,27 +38,6 @@ Resources:
     DependsOn:
       - TriggeringBucketSandesh
 
-  # LambdaSNSPolicy:
-  #   Type: AWS::SNS::TopicPolicy
-  #   Properties:
-  #     PolicyDocument:
-  #       Version: 2012-10-17
-  #       Id: SNSPolicy
-  #       Statement:
-  #       - Sid: "AllowLambda"
-  #         Effect: Allow
-  #         Principal:
-  #           Service: "lambda.amazonaws.com"
-  #         Action: "sns:Publish"
-  #         Resource: !Ref SNSEmail
-  #         Condition:
-  #           ArnEquals:
-  #             aws:PrincipalArn: !GetAtt SamLambdaSandesh.Arn
-
-  #     Topics:
-  #       - !Ref SNSEmail
-
-
   SamLambdaSandesh:
     Type: AWS::Serverless::Function
     Properties:
@@ -89,14 +68,23 @@ Resources:
     Properties:
       TopicName: 'SNSEmail'
 
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: "sandeshislama7@gmail.com"
+      Protocol: email
+      TopicArn: !Ref SNSEmail
+
+
   TriggeringBucketSandesh:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: "triggeringbucketsandesh"
-      # NotificationConfiguration:
-      #   QueueConfigurations:
-      #     - Event: s3:ObjectCreated:*
-      #       Queue: !GetAtt TriggeringSQSSandesh.Arn
+      NotificationConfiguration:
+        QueueConfigurations:
+          - Event: s3:ObjectCreated:*
+            Filter: 
+            Queue: !GetAtt TriggeringSQSSandesh.Arn
 
     DependsOn:
       - SNSEmail
