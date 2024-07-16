@@ -83,7 +83,11 @@ Resources:
       NotificationConfiguration:
         QueueConfigurations:
           - Event: s3:ObjectCreated:*
-            Filter: 
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix
+                    Value: .jpg
             Queue: !GetAtt TriggeringSQSSandesh.Arn
 
     DependsOn:
