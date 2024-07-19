@@ -1,6 +1,10 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: A SQS, Lambda and SNS Configuration
+Parameters:
+  BucketName:
+    Type: String
+    Default: triggeringbucketsandesh
 Resources:
   TriggeringSQSSandesh:
     Type: AWS::SQS::Queue
@@ -25,9 +29,7 @@ Resources:
           Condition:
             ArnLike:
               aws:SourceArn:
-                Fn::GetAtt:
-                - TriggeringBucketSandesh
-                - Arn
+                Fn::Sub: arn:aws:s3:::${BucketName}
         - Sid: AllowtoLambda
           Effect: Allow
           Principal:
@@ -42,40 +44,14 @@ Resources:
               aws:PrincipalArn:
                 Fn::GetAtt:
                 - SamLambdaSandesh
-                - ARN
+                - Arn
       Queues:
-        Fn::GetAtt:
-        - TriggeringSQSSandesh
-        - Arn
-    DependsOn:
-    - TriggeringBucketSandesh
-  LambdaSNSPolicy:
-    Type: AWS::SNS::TopicPolicy
-    Properties:
-      PolicyDocument:
-        Version: '2012-10-17'
-        Id: SNSPolicy
-        Statement:
-        - Sid: AllowLambda
-          Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-          Action: sns:Publish
-          Resource:
-            Ref: SNSEmail
-          Condition:
-            ArnEquals:
-              aws:PrincipalArn:
-                Fn::GetAtt:
-                - SamLambdaSandesh
-                - ARN
-      Topics:
-        Ref: SNSEmail
+      - Ref: TriggeringSQSSandesh
   SamLambdaSandesh:
     Type: AWS::Serverless::Function
     Properties:
       Handler: lambda_function.lambda_handler
-      Runtime: python3.9
+      Runtime: python3.10
       CodeUri: SamLambdaSandesh
       Description: Lambda function to publish to SNS Topic
       MemorySize: 128
@@ -89,11 +65,15 @@ Resources:
               - Arn
             BatchSize: 10
       Environment:
-        SNS_ARN:
-          Fn::GetAtt:
-          - SNSEmail
-          - Arn
+        Variables:
+          SNS_ARN:
+            Ref: SNSEmail
       Policies:
+      - SNSPublishMessagePolicy:
+          TopicName:
+            Fn::GetAtt:
+            - SNSEmail
+            - TopicName
       - CloudWatchPutMetricPolicy: {}
       - SQSPollerPolicy:
           QueueName:
@@ -106,10 +86,30 @@ Resources:
     Type: AWS::SNS::Topic
     Properties:
       TopicName: SNSEmail
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: sandeshislama7@gmail.com
+      Protocol: email
+      TopicArn:
+        Ref: SNSEmail
   TriggeringBucketSandesh:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: triggeringbucketsandesh
+      BucketName:
+        Ref: BucketName
+      NotificationConfiguration:
+        QueueConfigurations:
+        - Event: s3:ObjectCreated:*
+          Filter:
+            S3Key:
+              Rules:
+              - Name: suffix
+                Value: .jpg
+          Queue:
+            Fn::GetAtt:
+            - TriggeringSQSSandesh
+            - Arn
     DependsOn:
     - SNSEmail
-    - TriggeringSQSSandesh
+    - SQSQueuePolicy
